@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<html>
+  <head>
+    <title>HW5: Stacked Bar Charts</title>
+  </head>
+  <body>
+    <div>
+      <select class="selection" id='X'>
+      	<option selected disabled >選擇學制班別</option>
+        <option value="整體">整體</option>
+      	<option value="學士班(日間)">學士班</option>
+      	<option value="碩士班(日間)">碩士班</option>
+      	<option value="碩士在職專班">碩士在職專班</option>
+        <option value="博士班">博士班</option>
+        <option value="學士班(進修)">學士班(進修)</option>
+        <option value="五專">五專</option>
+        <option value="二專(日間)">二專(日間)</option>
+        <option value="二專(進修)">二專(進修)</option>
+    	</select> 
+    	<select class="selection" id='Y'>
+        <option selected disabled>選擇性別</option>
+        <option value="男">男生</option>>
+        <option value="女">女生</option>
+        <option value="男+女">男+女</option>
+      </select>
+      <button class="button" id='btn'>Confirm</button>
+    </div>
+    <script src="https://d3js.org/d3.v6.js"></script>
+    <script src="final.js" ></script>
+  </body>
+</html>
