@@ -6,6 +6,13 @@
   </head>
   <body>
     <div>
+      <select class="selection" id='Z'>
+      	<option selected disabled >選擇學年度</option>
+        <option value="整體">整體</option>
+      	<option value="105">105</option>
+        <option value="106">106</option>
+      	<option value="107">107</option>
+    	</select> 
       <select class="selection" id='X'>
       	<option selected disabled >選擇學制班別</option>
         <option value="整體">整體</option>
@@ -26,7 +33,9 @@
       </select>
       <button class="button" id='btn'>Confirm</button>
     </div>
+    <div id="chart-container" style="width: 960px; overflow-x: auto;">
+    </div>
     <script src="https://d3js.org/d3.v6.js"></script>
     <script src="final.js" ></script>
   </body>
-</html>
+</html>100 時間
