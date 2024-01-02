@@ -165,7 +165,7 @@
                 return false; // Do not include this item in the new array
             }
             
-            d.combinedKey = d['學年度'] +d['學期']+ d['學校名稱'] + d['學制班別'] + d['性別'];
+            d.combinedKey = d['學年度'] +d['學期'] +  d['學校名稱'] + d['學制班別'] + d['性別'];
             return true; // Include this item in the new array
         });
         
@@ -178,10 +178,11 @@ d3.select('#btn').on('click', function() {
     var selectedX = d3.select('#X').node().value;
     var selectedY = d3.select('#Y').node().value;
     var selectedZ = d3.select('#Z').node().value;
+    var selectedA = d3.select('#A').node().value;
     // Assuming you've loaded your data somewhere in the script
     d3.csv("dataset.csv").then(function (data) {
         
-        if (selectedX === '整體' || selectedY === '男+女' || selectedZ == '整體') {
+        if (selectedX === '整體' || selectedY === '男+女' || selectedZ == '整體' || selectedA == '整體') {
             let sumsBySchool = [];
             if(selectedX != '整體'){
                 data = data.filter(function(d) {
@@ -207,7 +208,14 @@ d3.select('#btn').on('click', function() {
                     return false;
                 });
             }
-            console.log(data)
+            if(selectedA != '整體'){
+                data = data.filter(function(d) {
+                    if (d['設立別'] === selectedA) {
+                        return true; 
+                    }
+                    return false;
+                });
+            }
             data.forEach(d => {
                 let schoolName = d['學校名稱'];
                 if (!sumsBySchool[schoolName]) {
@@ -254,7 +262,7 @@ d3.select('#btn').on('click', function() {
             data = data.filter(function(d) {
                 var total = 0;
                 var enrolledStudents = parseInt(d['在學學生數'].replace(/,/g, ''), 10);
-                if (d['學制班別'] === selectedX && d['性別'] === selectedY && d['學年度'] === selectedZ) {
+                if (d['學制班別'] === selectedX && d['性別'] === selectedY && d['學年度'] === selectedZ && selectedA == d['設立別']) {
                     keys.forEach(function(key) {
                         d[key] = +d[key];
                         if (isNaN(d[key])) {
