@@ -17,8 +17,6 @@
         "其他退學人數",
     ];
 
-    
-
     function render(data){
         const margin = { top: 20, right: 20, bottom: 150, left: 40 };
         const height = 500 - margin.top - margin.bottom;
@@ -36,25 +34,23 @@
         var y = d3.scaleLinear()
             .rangeRound([height, 0]);
 
-            var z = d3.scaleOrdinal()
-                .range([
-                    "#ef476f", // Berry Red
-                    "#ffd166", // Sunny Yellow
-                    "#06d6a0", // Aquamarine
-                    "#118ab2", // Ocean Blue
-                    "#073b4c", // Navy Blue
-                    "#8ac926", // Lime Green
-                    "#6a4c93", // Purple
-                    "#f77f00", // Orange
-                    "#80b918", // Leaf Green
-                    "#ff70a6", // Pink
-                    "#ff9770", // Coral
-                    "#9e2a2b"  // Dark Red
-                ]);
+        var z = d3.scaleOrdinal()
+            .range([
+                "#ef476f", // Berry Red
+                "#ffd166", // Sunny Yellow
+                "#06d6a0", // Aquamarine
+                "#118ab2", // Ocean Blue
+                "#073b4c", // Navy Blue
+                "#8ac926", // Lime Green
+                "#6a4c93", // Purple
+                "#f77f00", // Orange
+                "#80b918", // Leaf Green
+                "#ff70a6", // Pink
+                "#ff9770", // Coral
+                "#9e2a2b"  // Dark Red
+            ]);
 
-        
-
-        var div = d3.select("body").append("div")
+        var tooltip = d3.select("body").append("div")
             .attr("class", "tooltip")
             .style("opacity", 0);
         var maxTotal = d3.max(data, function(d) { return d.total; });
@@ -84,17 +80,76 @@
             .attr("height", function (d) { return y(d[0]) - y(d[1]); })
             .attr("width", x.bandwidth())
             .on("mouseover", function(event, d) {
-                div.transition()        
+                tooltip.transition()        
                     .duration(200)      
                     .style("opacity", .9);   
-                div.html(d.data.combinedKey + "<br/>"  + d[1])  
+                tooltip.html(d.data.combinedKey + "<br/>"  + d[1])  
                     .style("left", (event.pageX) + "px")     
-                    .style("top", (event.pageY - 28) + "px");    
+                    .style("top", (event.pageY - 28) + "px"); 
+                
+                // Clear out old piechart
+                d3.select('#pie-chart-container').selectAll('svg').remove();
+                // Create new piechart based on percentage of students that dropped out
+                const drawPie = (data, colorScale, showText=false) => {
+                    const radius = Math.min(150, 150) / 2 - margin.top;
+                    const pieSvg = d3.select('#pie-chart-container').append('svg')
+                        .attr('width', 150)
+                        .attr('height', 150);   
+                    const pie = d3.pie()
+                        .value(function(d) {return d[1]});
+                    const pieChart = pieSvg.append('g')
+                        .attr('transform', 'translate(75, 75)');
+                    const data_ready = pie(Object.entries(data));
+                    const arcGenerator = d3.arc()
+                        .innerRadius(0)
+                        .outerRadius(radius);
+                    pieChart.selectAll('pieSlice')
+                        .data(data_ready)
+                        .enter()
+                        .append('path')
+                        .attr('d', arcGenerator)
+                        .attr('fill', function(d) {return(colorScale(d.data[0]))})
+                        .attr("stroke", "black")
+                        .style("stroke-width", "2px")
+                        .style("opacity", 0.7);
+
+                    if (showText) {
+                        pieChart.selectAll('pieSlice')
+                            .data(data_ready)
+                            .enter()
+                            .append('text')
+                            .text(function(d) {
+                                return d.data[0] + ': ' + d.data[1];
+                            })
+                            .attr("transform", function(d) { return "translate(" + arcGenerator.centroid(d) + ")";  })
+                            .style("text-anchor", "middle")
+                            .style("font-size", 12)
+                    }
+                };
+
+                drawPie(
+                    {
+                        '在學學生數': parseInt(d.data['在學學生數']),
+                        '退學人數': parseInt(d.data['退學人數小計'])
+                    }, 
+                    d3.scaleOrdinal().range(['#118ab2', '#ff0066']),
+                    true
+                );
+
+                const percentageData = {};
+                keys.forEach(key => {
+                    percentageData[key] = d.data[key];
+                });
+
+                drawPie(
+                    percentageData,
+                    z,
+                );
             })                  
             .on("mouseout", function(d) {       
-                div.transition()        
-                    .duration(500)      
-                    .style("opacity", 0);   
+                tooltip.transition()        
+                    .duration(5000)      
+                    .style("opacity", 0);
             });
 
         svg.append("g")
