@@ -17,6 +17,47 @@
         "其他退學人數",
     ];
 
+    // Create new piechart based on percentage of students that dropped out
+    const drawPie = (selector, data, colorScale, showText=false) => {
+        const margin = 20;
+        const radius = Math.min(150, 150) / 2 - margin;
+        const pieSvg = d3.select(selector).append('svg')
+            .attr('width', 150)
+            .attr('height', 150);   
+        const pie = d3.pie()
+            .value(function(d) {return d[1]});
+        const pieChart = pieSvg.append('g')
+            .attr('transform', 'translate(75, 75)');
+        const data_ready = pie(Object.entries(data));
+        const arcGenerator = d3.arc()
+            .innerRadius(0)
+            .outerRadius(radius);
+        pieChart.selectAll('pieSlice')
+            .data(data_ready)
+            .enter()
+            .append('path')
+            .attr('d', arcGenerator)
+            .attr('fill', function(d) {return(colorScale(d.data[0]))})
+            .attr("stroke", "black")
+            .style("stroke-width", "2px")
+            .style("opacity", 0.7);
+
+        if (showText) {
+            pieChart.selectAll('pieSlice')
+                .data(data_ready)
+                .enter()
+                .append('text')
+                .text(function(d) {
+                    return d.data[0] + ': ' + d.data[1];
+                })
+                .attr("transform", function(d) { return "translate(" + arcGenerator.centroid(d) + ")";  })
+                .style("text-anchor", "middle")
+                .style("font-size", 12)
+        }
+
+        return pieSvg;
+    };
+
     function render(data){
         const margin = { top: 20, right: 20, bottom: 150, left: 40 };
         const height = 500 - margin.top - margin.bottom;
@@ -49,10 +90,16 @@
                 "#ff9770", // Coral
                 "#9e2a2b"  // Dark Red
             ]);
-
-        var tooltip = d3.select("body").append("div")
+        
+        var tooltip = d3.select("#container").append("div")
             .attr("class", "tooltip")
-            .style("opacity", 0);
+            .style("position", "absolute")
+            .style("opacity", 0)
+            .style("background-color", "white")
+            .style("border", "solid")
+            .style("border-width", "2px")
+            .style("border-radius", "5px");
+
         var maxTotal = d3.max(data, function(d) { return d.total; });
         d3.select("body").selectAll("svg").remove();
         x.domain(data.map(function (d) { return d.combinedKey; }));
@@ -82,52 +129,14 @@
             .on("mouseover", function(event, d) {
                 tooltip.transition()        
                     .duration(200)      
-                    .style("opacity", .9);   
-                tooltip.html(d.data.combinedKey + "<br/>"  + d[1])  
-                    .style("left", (event.pageX) + "px")     
-                    .style("top", (event.pageY - 28) + "px"); 
-                
-                // Clear out old piechart
-                d3.select('#pie-chart-container').selectAll('svg').remove();
-                // Create new piechart based on percentage of students that dropped out
-                const drawPie = (data, colorScale, showText=false) => {
-                    const radius = Math.min(150, 150) / 2 - margin.top;
-                    const pieSvg = d3.select('#pie-chart-container').append('svg')
-                        .attr('width', 150)
-                        .attr('height', 150);   
-                    const pie = d3.pie()
-                        .value(function(d) {return d[1]});
-                    const pieChart = pieSvg.append('g')
-                        .attr('transform', 'translate(75, 75)');
-                    const data_ready = pie(Object.entries(data));
-                    const arcGenerator = d3.arc()
-                        .innerRadius(0)
-                        .outerRadius(radius);
-                    pieChart.selectAll('pieSlice')
-                        .data(data_ready)
-                        .enter()
-                        .append('path')
-                        .attr('d', arcGenerator)
-                        .attr('fill', function(d) {return(colorScale(d.data[0]))})
-                        .attr("stroke", "black")
-                        .style("stroke-width", "2px")
-                        .style("opacity", 0.7);
-
-                    if (showText) {
-                        pieChart.selectAll('pieSlice')
-                            .data(data_ready)
-                            .enter()
-                            .append('text')
-                            .text(function(d) {
-                                return d.data[0] + ': ' + d.data[1];
-                            })
-                            .attr("transform", function(d) { return "translate(" + arcGenerator.centroid(d) + ")";  })
-                            .style("text-anchor", "middle")
-                            .style("font-size", 12)
-                    }
-                };
+                    .style("opacity", .9)
+                    .style("left", (event.x + 50) + "px")     
+                    .style("top", (event.y - 30) + "px")
+                    .style('z-index', 1);
+                tooltip.html(d.data.combinedKey + "<br/>"  + d[1]);
 
                 drawPie(
+                    '.tooltip',
                     {
                         '在學學生數': parseInt(d.data['在學學生數']),
                         '退學人數': parseInt(d.data['退學人數小計'])
@@ -135,21 +144,23 @@
                     d3.scaleOrdinal().range(['#118ab2', '#ff0066']),
                     true
                 );
-
-                const percentageData = {};
-                keys.forEach(key => {
-                    percentageData[key] = d.data[key];
-                });
-
+                const percentageData = keys.reduce((acc, key) => {
+                    acc[key] = d.data[key];
+                    return acc;
+                }, {})
                 drawPie(
+                    '.tooltip',
                     percentageData,
                     z,
                 );
             })                  
             .on("mouseout", function(d) {       
                 tooltip.transition()        
-                    .duration(5000)      
+                    .duration(500)      
                     .style("opacity", 0);
+                // Hide tooltip set z-index to -1
+                d3.select('.tooltip')
+                    .style('z-index', -1);
             });
 
         svg.append("g")
@@ -197,6 +208,30 @@
             .attr("y", 9.5)
             .attr("dy", "0.32em")
             .text(function (d) { return d; });
+
+        // Render piechart of each 25% of the data sorted by rank
+        const sortedData = data.filter(d => !isNaN(d['total'])).sort((a, b) => parseInt(a['排名']) - parseInt(b['排名']));
+        const quarterSize = Math.floor(sortedData.length / 4);
+
+        const quarters = [
+            sortedData.slice(0, quarterSize),
+            sortedData.slice(quarterSize, quarterSize * 2),
+            sortedData.slice(quarterSize * 2, quarterSize * 3),
+            sortedData.slice(quarterSize * 3, sortedData.length)
+        ];
+        
+        quarters.forEach((quarter, index) => {
+            const aggregatedData = {
+                '在學學生數': quarter.reduce((acc, d) => acc + parseInt(d['在學學生數'].replace(/,/g, ''), 10), 0),
+                '退學人數': quarter.reduce((acc, d) => acc + parseInt(d['退學人數小計'].replace(/,/g, ''), 10), 0)
+            };
+            drawPie(
+                '#piechart-container',
+                aggregatedData, 
+                d3.scaleOrdinal().range(['#118ab2', '#ff0066']),
+                true
+            );
+        });
 
     }
     d3.csv("dataset.csv").then(function (data) {
