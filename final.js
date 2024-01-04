@@ -209,11 +209,9 @@
         .style("font-size", "10px")
         .text(function(d) { return d; });
 
-
         // Render piechart of each 25% of the data sorted by rank
         const sortedData = data.filter(d => !isNaN(d['total'])).sort((a, b) => parseInt(a['排名']) - parseInt(b['排名']));
         const quarterSize = Math.floor(sortedData.length / 4);
-
         const quarters = [
             sortedData.slice(0, quarterSize),
             sortedData.slice(quarterSize, quarterSize * 2),
@@ -222,15 +220,14 @@
         ];
         
         quarters.forEach((quarter, index) => {
-            const aggregatedData = {
-                '在學學生數': quarter.reduce((acc, d) => acc + parseInt(d['在學學生數'].replace(/,/g, ''), 10), 0),
-                '退學人數': quarter.reduce((acc, d) => acc + parseInt(d['退學人數小計'].replace(/,/g, ''), 10), 0)
-            };
+            const percentageData = keys.reduce((acc, key) => {
+                acc[key] = quarter.reduce((acc, d) => acc + d[key], 0);
+                return acc;
+            }, {})
             drawPie(
                 '#piechart-container',
-                aggregatedData, 
-                d3.scaleOrdinal().range(['#118ab2', '#ff0066']),
-                true
+                percentageData,
+                z,
             );
         });
 
