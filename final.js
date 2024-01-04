@@ -188,26 +188,27 @@
             .text("Dropout Student Percentage / 100% ");
         
         
-        var legend = svg.append("g")
-            .attr("font-family", "sans-serif")
-            .attr("font-size", 10)
-            .attr("text-anchor", "end")
-            .selectAll("g")
-            .data(keys.slice().reverse())
-            .enter().append("g")
-            .attr("transform", function (d, i) { return "translate(-50," + i * 20 + ")"; });
+        // Assuming you have a color scale function z that maps your keys to colors
 
-        legend.append("rect")
-            .attr("x", width - 19)
-            .attr("width", 19)
-            .attr("height", 19)
-            .attr("fill", z);
+        var legend = d3.select("#legend-container")
+        .selectAll("div")
+        .data(keys.slice().reverse())
+        .enter().append("div")
+        .style("display", "flex")
+        .style("align-items", "center")
+        .style("margin-bottom", "5px"); // Adjust styling as needed
 
-        legend.append("text")
-            .attr("x", width - 24)
-            .attr("y", 9.5)
-            .attr("dy", "0.32em")
-            .text(function (d) { return d; });
+        legend.append("div")
+        .style("width", "19px")
+        .style("height", "19px")
+        .style("background-color", function(d) { return z(d); })
+        .style("margin-right", "5px");
+
+        legend.append("div")
+        .style("font-family", "sans-serif")
+        .style("font-size", "10px")
+        .text(function(d) { return d; });
+
 
         // Render piechart of each 25% of the data sorted by rank
         const sortedData = data.filter(d => !isNaN(d['total'])).sort((a, b) => parseInt(a['排名']) - parseInt(b['排名']));
